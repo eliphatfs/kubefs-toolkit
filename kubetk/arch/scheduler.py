@@ -58,6 +58,14 @@ class WorkQueue(object):
             self.total_backoff_success += 1
         self.total_success += 1
 
+    def ongoing_to_queue(self):
+        """
+        only call when no worker is running
+        """
+        for workload in self.ongoing:
+            self.queue.put_nowait(workload)
+        self.ongoing.clear()
+
 
 class Statistics(object):
 
@@ -129,6 +137,7 @@ def serve_scheduler(work_queue: WorkQueue, stats_period: float = 30.0, port: int
         server.register_function(work_queue.put)
         server.register_function(work_queue.done)
         server.register_function(work_queue.error)
+        server.register_function(work_queue.ongoing_to_queue)
         server.register_function(stats.stat)
         server.register_function(stats.list_errors)
         server.register_function(stats.list_messages)
